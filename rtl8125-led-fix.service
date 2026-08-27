@@ -1,0 +1,12 @@
+[Unit]
+Description=RTL8125 LED Fix
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/rtl8125-led-fix.py
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
