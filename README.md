@@ -1,90 +1,29 @@
+# FNOS Drivers for BDY-G98 / RK3588
 
+飞牛 FNOS 系统驱动修复工具集合，适用于 BDY-G98（Rockchip RK3588）平台。
 
+## 项目目录
 
----
+| 文件夹 | 项目 | 简要说明 |
+|--------|------|----------|
+| [`yt921x-switch-driver/`](./yt921x-switch-driver) | YT9215S 交换机驱动 | 修复系统升级后交换机 8 个网口无法识别问题，提供预编译的 `yt921x.ko` 和 `tag_yt921x.ko` 内核模块 |
+| [`rtl8125-led-fix/`](./rtl8125-led-fix) | RTL8125 LED 修复 | 修复 Realtek RTL8125 2.5G 网卡网口指示灯不亮问题，通过 Python 脚本操作寄存器开启 LED，systemd 服务开机自启 |
+| [`rk3588-hardware-decode/`](./rk3588-hardware-decode) | RK3588 硬解码驱动 | 修复硬件视频编解码异常问题，包含 `rk_vcodec`、`rga3`、`rknpu` 及依赖模块，恢复 `/dev/mpp_service` 设备节点和 ffmpeg rkmpp 硬件加速 |
+| [`yt921x-build-tools/`](./yt921x-build-tools) | YT9215S 编译工具 | 一键编译脚本，在 x86_64 交叉编译环境中编译 YT9215S 驱动，支持内核升级后自动检测版本并重新编译 |
 
-## YT9215S 交换机驱动一键编译工具 (v1.0.1 新增)
+## 下载
 
-### 说明
+预编译驱动包和编译工具请前往 [Releases](https://github.com/a276519803-sudo/fnos-drivers_for_BDY-G98/releases) 页面下载。
 
-本工具用于在 x86_64 交叉编译环境中编译 YT9215S 交换机驱动，适用于飞牛 FNOS 系统升级后交换机网口无法识别、内核版本变更后需要重新编译驱动的场景。
+## 适用环境
 
-**编译产物**：`yt921x.ko`（DSA 交换机主驱动）+ `tag_yt921x.ko`（标签协议驱动）
+- 芯片平台：Rockchip RK3588 / RK3588S
+- 设备：BDY-G98、飞牛 FNOS 设备
+- 系统：飞牛 FNOS（Linux）
+- 架构：arm64 / aarch64
 
-### 编译环境要求
+## 说明
 
-| 项目 | 要求 |
-|------|------|
-| 编译系统 | Ubuntu 20.04 / 22.04 / 24.04 (x86_64) |
-| 编译器 | aarch64-linux-gnu-gcc（交叉编译器） |
-| 目标架构 | arm64 / aarch64（飞牛 BDY-G98 / RK3588） |
-| 内存 | 4GB 以上 |
-| 磁盘 | 20GB 以上空闲空间 |
-
-**注意**：本编译脚本必须在 x86_64 交叉编译环境中运行，不能直接在飞牛设备上编译！
-
-### 快速使用
-
-```bash
-# 1. 安装编译依赖
-sudo apt update
-sudo apt install -y gcc-aarch64-linux-gnu build-essential libssl-dev \
-    libelf-dev bison flex bc kmod cpio python3 git
-
-    # 2. 下载并解压编译工具
-    unzip yt921x-build-tools-v1.0.1.zip
-    cd yt921x-build-tools-v1.0.1
-    chmod +x build_yt921x.sh
-
-    # 3. 配置飞牛设备信息（三选一）
-    # 方式一：修改脚本中的 TARGET_IP 和 TARGET_USER
-    # 方式二：命令行参数
-    ./build_yt921x.sh --target-ip <设备IP>
-    # 方式三：环境变量
-    TARGET_IP=<设备IP> TARGET_USER=<用户名> ./build_yt921x.sh
-
-    # 4. 编译完成后，产物在 ~/yt921x-output/ 目录
-    # 5. 上传到飞牛设备安装
-    scp -r ~/yt921x-output <用户名>@<设备IP>:/tmp/
-    ssh <用户名>@<设备IP>
-    cd /tmp/yt921x-output
-    sudo ./install.sh
-    ```
-
-    ### 命令行参数
-
-    ```bash
-    ./build_yt921x.sh [选项]
-
-    选项:
-      --kernel-dir DIR     内核源码目录 (默认: ~/kernel)
-        --output-dir DIR     输出目录 (默认: ~/yt921x-output)
-          --target-ip IP       飞牛设备 IP (用于自动检测内核版本)
-            --kernel-version VER 手动指定目标内核版本
-              --cross-compile PRE  交叉编译器前缀 (默认: aarch64-linux-gnu-)
-                -h, --help           显示帮助
-                ```
-
-                ### 下载地址
-
-                - [yt921x-build-tools-v1.0.1.zip](https://github.com/a276519803-sudo/fnos-drivers_for_BDY-G98/releases/download/v1.0.1/yt921x-build-tools-v1.0.1.zip)
-
-                ---
-
-                ## ⚠️ 隐私与安全说明
-
-                本仓库所有文档和脚本中的 IP 地址、用户名等均为**示例占位符**，请在使用前替换为您自己的实际信息：
-
-                - `<设备IP>` → 替换为您的飞牛设备实际 IP 地址（如 192.168.1.100）
-                - `<用户名>` → 替换为您的飞牛设备登录用户名（如 root、admin 等）
-
-                **请勿在公开仓库或 Issue 中泄露您的真实 IP 地址、用户名、密码等敏感信息！**
-
-                ---
-
-                ## 版本历史
-
-                | 版本 | 发布日期 | 内容 |
-                |------|----------|------|
-                | v1.0.0 | 2026-08-27 | YT9215S驱动、RTL8125 LED修复、RK3588硬解码驱动 |
-                | v1.0.1 | 2026-08-31 | 新增 YT9215S 一键编译工具，修复隐私信息泄露问题 |
+- 各项目详细使用方法请点击对应文件夹查看 `README.md`
+- 文档中所有 IP 地址、用户名均为示例占位符，使用前请替换为实际信息
+- 本仓库主页仅作项目索引，详细更新记录见各项目目录及 Releases 页面
