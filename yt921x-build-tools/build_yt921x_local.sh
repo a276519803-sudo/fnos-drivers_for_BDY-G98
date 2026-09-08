@@ -116,9 +116,13 @@ main() {
 #include <linux/if_ether.h>
 #include <net/dsa.h>
 
-/* 以太网协议号 - YT921X 专用标签协议 */
+/* 以太网协议号 - YT921X 专用标签协议
+ * 注意：飞牛官方固件使用 0x9988，Linux 主线使用 0x00F9
+ * BDY-G98 设备的交换机芯片已被官方驱动初始化为 0x9988，
+ * 因此必须使用 0x9988 才能匹配硬件状态
+ */
 #ifndef ETH_P_YT921X
-#define ETH_P_YT921X	0x00F9
+#define ETH_P_YT921X	0x9988
 #endif
 
 /* DSA 标签协议枚举 - YT921X */
@@ -148,7 +152,12 @@ COMPAT_EOF
             sed -i '1i #include "compat.h"' "$f"
         fi
     done
-    print_info "兼容性补丁已创建"
+
+    # 强制替换 ETH_P_YT921X 为 0x9988（飞牛官方固件使用的值）
+    # 原因：compat.h 的宏可能被内核头文件覆盖，直接硬编码最可靠
+    sed -i 's/ETH_P_YT921X/0x9988/g' yt921x.c
+    sed -i 's/ETH_P_YT921X/0x9988/g' tag_yt921x.c
+    print_info "兼容性补丁已创建（ETH_P_YT921X 强制为 0x9988）"
 
     # 步骤5: 编译 yt921x.ko
     print_step "5/7" "编译 yt921x.ko"

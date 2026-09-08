@@ -125,3 +125,20 @@ A: 从有完整内核源码的环境重新编译 tag_yt921x.ko，替换到 `/lib
 - 兼容性补丁：定义 `ETH_P_YT921X`、`DSA_TAG_PROTO_YT921X` 等 6.18 内核缺失的常量
 - 编译器版本：gcc 12.2.0（与内核编译版本一致）
 - vermagic：自动匹配当前内核版本
+
+### 重要：Tag EtherType 0x9988
+
+飞牛官方固件使用 **0x9988** 作为 YT9215S 交换机的 DSA Tag EtherType，而 Linux 主线使用 0x00F9。
+
+BDY-G98 设备的交换机芯片在出厂时或被官方驱动初始化后，CPU_TAG_TPID 寄存器值为 0x9988。因此本脚本强制将 `ETH_P_YT921X` 定义为 0x9988，并在源码中硬编码替换，以匹配硬件状态。
+
+如果使用 0x00F9 编译，驱动 probe 时会报错：
+```
+yt921x stmmac-0:1d: Tag type 0x9988 != 0xf9
+yt921x stmmac-0:1d: probe with driver yt921x failed with error -22
+```
+
+## 版本历史
+
+- **v1.0.2**：初始飞牛本地编译版，ETH_P_YT921X = 0x00F9
+- **v1.0.3**：修复 Tag EtherType 为 0x9988（匹配飞牛官方固件硬件配置），解决升级后交换机 probe 失败问题
